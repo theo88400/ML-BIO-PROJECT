@@ -2,6 +2,7 @@ from copy import deepcopy
 import torch
 import torch.nn as nn
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 """
 This file contains all the methods used for the federated learning with pytorch model
@@ -95,8 +96,6 @@ def set_to_zero_model_weights(model):
         layer_weigths.data.sub_(layer_weigths.data)
 
 def average_models(model, clients_models_hist:list , weights:list):
-
-
     """Creates the new model of a given iteration with the models of the other
     clients"""
 
@@ -113,9 +112,30 @@ def average_models(model, clients_models_hist:list , weights:list):
     return new_model
 
 def classical_training(model, train_set, test_set, n_iter:int, lr=10**-2, decay=1):
+    """
+    Perfom a classical training on the model with Binary Cross Entropy loss
+    Args:
+        - `model`: the model to train
+        - `train_set`: the training set
+        - `test_set`: the testing set
+        - `n_iter`: number of iterations (epochs)
+        - `lr`: learning rate
+        - `decay`: to change the learning rate at each iteration
+
+    Returns:
+        - `model`: the trained model
+        - `train_acc_hist`: the training accuracy history
+        - `test_acc_hist`: the testing accuracy history
+        - `loss_hist`: the loss history
+    """
+
     model.train()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     loss_f=nn.BCELoss()
+
+    train_acc_hist=[]
+    test_acc_hist=[]
+    loss_hist=[]
 
     for i in range(n_iter):
         with tqdm(train_set, unit="batch") as tepoch:
@@ -133,8 +153,16 @@ def classical_training(model, train_set, test_set, n_iter:int, lr=10**-2, decay=
 
         lr*=decay
         print(f'====> i: {i+1} Loss: {loss.item()}')
+        train_acc = accuracy_dataset(model, train_set)
+        print(f'====> i: {i+1} Train Accuracy: {train_acc}')
         test_acc = accuracy_dataset(model, test_set)
         print(f'====> i: {i+1} Test Accuracy: {test_acc}')
+
+        train_acc_hist.append(train_acc)
+        test_acc_hist.append(test_acc)
+        loss_hist.append(loss.item())
+
+    return model, train_acc_hist, test_acc_hist, loss_hist
 
 def FedProx(model, training_sets:list, n_iter:int, testing_sets:list, mu=0,
     file_name="test", epochs=5, lr=10**-2, decay=1):
@@ -222,3 +250,25 @@ def FedProx(model, training_sets:list, n_iter:int, testing_sets:list, mu=0,
         lr*=decay
 
     return model, loss_hist, acc_hist
+
+def plot_acc_loss(title:str, acc_train_hist:list, acc_test_hist:list, loss_hist:list):
+  """
+  Plot history of loss and accuracy
+  Args:
+        - title: title of the plot
+        - acc_train_hist: list of the training accuracy
+        - acc_test_hist: list of the testing accuracy
+        - loss_hist: list of the loss
+  """
+  fig, axs = plt.subplots(1, 2, figsize=(10, 5))
+  axs[0].plot(loss_hist)
+  axs[0].set_xlabel("iterations")
+  axs[0].set_ylabel("loss")
+  axs[1].plot(acc_train_hist, label="train")
+  axs[1].plot(acc_test_hist, label="test")
+  axs[1].legend()
+  axs[1].set_xlabel("iterations")
+  axs[1].set_ylabel("accuracy")
+  fig.suptitle(title)
+  fig.tight_layout()
+  fig.show()
