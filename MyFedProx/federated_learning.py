@@ -1,6 +1,7 @@
 from copy import deepcopy
 import torch
 import torch.nn as nn
+from tqdm import tqdm
 
 """
 This file contains all the methods used for the federated learning with pytorch model
@@ -117,18 +118,23 @@ def classical_training(model, train_set, test_set, n_iter:int, lr=10**-2, decay=
     loss_f=nn.BCELoss()
 
     for i in range(n_iter):
-        for idx, (features,labels) in enumerate(train_set):
+        with tqdm(train_set, unit="batch") as tepoch:
+            for idx, (features,labels) in enumerate(train_set):
 
-            optimizer.zero_grad()
+                optimizer.zero_grad()
 
-            predictions= model(features)
-            predictions = predictions.reshape(-1)
-            loss=loss_f(predictions,labels.float())
+                predictions= model(features)
+                predictions = predictions.reshape(-1)
+                loss=loss_f(predictions,labels.float())
 
-            loss.backward()
-            optimizer.step()
+                loss.backward()
+                optimizer.step()
+                tepoch.update(1)
 
         lr*=decay
+        print(f'====> i: {i+1} Loss: {loss.item()}')
+        test_acc = accuracy_dataset(model, test_set)
+        print(f'====> i: {i+1} Test Accuracy: {test_acc}')
 
 def FedProx(model, training_sets:list, n_iter:int, testing_sets:list, mu=0,
     file_name="test", epochs=5, lr=10**-2, decay=1):
