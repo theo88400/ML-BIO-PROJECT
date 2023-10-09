@@ -9,21 +9,25 @@ This file contains methods to download and split the SIIM_ISIC Dataset into pyto
 """
 
 
-def iid_split(dataset: Dataset, nb_nodes: int, n_samples_per_node: int, batch_size: int, shuffle: bool) -> [DataLoader]:
-    # TODO: will be implemented later
-    pass
+def fair_split(dataset: Dataset, nb_nodes: int, n_samples_per_node: int, batch_size: int, shuffle: bool) -> [DataLoader]:
+    dataset_split = torch.utils.data.random_split(dataset, [1/nb_nodes for _ in range(nb_nodes)])
+    dataloaders = [DataLoader(d, batch_size=batch_size, shuffle=shuffle) for d in dataset_split]
+    return dataloaders
 
-def non_iid_split(dataset: Dataset, nb_nodes: int, n_samples_per_node: int, batch_size: int, shuffle: int, shuffle_digits=False) -> [DataLoader]:
-    # TODO: will be implemented later
-    pass
+def unfair_split(dataset: Dataset, nb_nodes: int, n_samples_per_node: [int], batch_size, shuffle: bool) -> [DataLoader]:
+    #TODO improve the way we split the dataset
+    dataset_split = torch.utils.data.random_split(dataset, n_samples_per_node)
+    dataloaders = [DataLoader(d, batch_size=batch_size, shuffle=shuffle) for d in dataset_split]
+    return dataloaders
 
-def get_SIIM_ISIC(root_path, csv_path, type="iid", train_size=0.8, test_size=0.2, n_clients=3, batch_size=25, shuffle=True, device="cpu", total_size=None):
+
+def get_SIIM_ISIC(root_path, csv_path, type="normal", train_size=0.8, test_size=0.2, n_clients=3, batch_size=25, shuffle=True, device="cpu", total_size=None):
     """
     Get the SIIM_ISIC dataset split into train and test dataloaders
     Args:
         - root_path: path to the folder containing the images
         - csv_path: path to the csv file containing the dataframe
-        - type: "iid" or "non-iid"
+        - type: "fair" or "non-fair"
         - train_size: size of the train dataset (between 0 and 1)
         - test_size: size of the test dataset (between 0 and 1)
         - n_clients: number of clients
@@ -32,7 +36,7 @@ def get_SIIM_ISIC(root_path, csv_path, type="iid", train_size=0.8, test_size=0.2
         - device: device to use for the dataset (cpu or cuda)
         - total_size: total size of the dataset (if None, then the whole dataset is used)
     """
-    assert(type=="iid" or type=="non-iid")
+    assert(type=="normal" or type=="fair" or type=="non-fair")
     assert(train_size+test_size==1)
 
     # load the dataset contains in the folder root_path
@@ -46,6 +50,11 @@ def get_SIIM_ISIC(root_path, csv_path, type="iid", train_size=0.8, test_size=0.2
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=shuffle)
     test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=shuffle)
     
+    if type=="fair":
+        return  fair_split(train_dataset, n_clients, len(train_dataset)//n_clients, batch_size, shuffle), test_dataloader
+    elif type=="unfair":
+        return unfair_split(train_dataset, n_clients, [len(train_dataset)//n_clients for _ in range(n_clients)], batch_size, shuffle), test_dataloader
+
     return train_dataloader, test_dataloader
 
 def plot_samples(data, title=None, plot_name="", n_examples =20):
