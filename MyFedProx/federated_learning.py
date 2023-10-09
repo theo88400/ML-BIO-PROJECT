@@ -82,6 +82,7 @@ def accuracy_dataset(model, dataset):
         predictions= model(features)
 
         _,predicted=predictions.max(1,keepdim=True)
+        _,labels=labels.max(1,keepdim=True)
 
         correct+=torch.sum(predicted.view(-1,1)==labels.view(-1, 1)).item()
 
@@ -144,8 +145,10 @@ def classical_training(model, train_set, test_set, n_iter:int, lr=10**-2, decay=
                 optimizer.zero_grad()
 
                 predictions= model(features)
-                predictions = predictions.reshape(-1)
-                loss=loss_f(predictions,labels.float())
+                #predictions = predictions.reshape(-1)
+                probabilities = torch.nn.functional.softmax(predictions, dim=1)
+
+                loss=loss_f(probabilities,labels.float())
 
                 loss.backward()
                 optimizer.step()

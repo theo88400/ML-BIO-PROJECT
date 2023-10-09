@@ -22,7 +22,7 @@ def unfair_split(dataset: Dataset, nb_nodes: int, n_samples_per_node: [int], bat
     return dataloaders
 
 
-def get_SIIM_ISIC(root_path, csv_path, type="normal", train_size=0.8, test_size=0.2, n_clients=3, batch_size=25, shuffle=True, device="cpu", total_size=None):
+def get_SIIM_ISIC(root_path, csv_path, type="normal", train_size=0.8, test_size=0.2, n_clients=3, batch_size=25, shuffle=True, device="cpu", total_size=None, resnet50=False):
     """
     Get the SIIM_ISIC dataset split into train and test dataloaders
     Args:
@@ -42,7 +42,7 @@ def get_SIIM_ISIC(root_path, csv_path, type="normal", train_size=0.8, test_size=
 
     # load the dataset contains in the folder root_path
     dataframe = pd.read_csv(csv_path)
-    dataset = SIIM_ISIC_Dataset(root_path=root_path, dataframe=dataframe, device=device, total_size=total_size)
+    dataset = SIIM_ISIC_Dataset(root_path=root_path, dataframe=dataframe, device=device, total_size=total_size, resnet50=resnet50)
 
     # split the dataset into train and test
     train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
