@@ -3,6 +3,7 @@ from torch.utils.data import DataLoader, Dataset
 import matplotlib.pyplot as plt
 from MyFedProx.SIIM_ISIC_Dataset import SIIM_ISIC_Dataset
 import pandas as pd
+from copy import deepcopy
 
 """
 This file contains methods to download and split the SIIM_ISIC Dataset into pytorch dataloaders
@@ -51,9 +52,9 @@ def get_SIIM_ISIC(root_path, csv_path, type="normal", train_size=0.8, test_size=
     test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=shuffle)
     
     if type=="fair":
-        return  fair_split(train_dataset, n_clients, len(train_dataset)//n_clients, batch_size, shuffle), test_dataloader
+        return  fair_split(train_dataset, n_clients, len(train_dataset)//n_clients, batch_size, shuffle), [deepcopy(test_dataloader) for _ in range(n_clients)]
     elif type=="unfair":
-        return unfair_split(train_dataset, n_clients, [len(train_dataset)//n_clients for _ in range(n_clients)], batch_size, shuffle), test_dataloader
+        return unfair_split(train_dataset, n_clients, [len(train_dataset)//n_clients for _ in range(n_clients)], batch_size, shuffle), [deepcopy(test_dataloader) for _ in range(n_clients)]
 
     return train_dataloader, test_dataloader
 
