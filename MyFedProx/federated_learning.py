@@ -30,8 +30,8 @@ def train_step(model, model_0, mu:int, optimizer, train_data, loss_f):
         optimizer.zero_grad()
 
         predictions= model(features)
-
-        loss=loss_f(predictions,labels)
+        probabilities = torch.nn.functional.softmax(predictions, dim=1)
+        loss=loss_f(probabilities,labels.float())
         loss+=mu/2*difference_models_norm_2(model,model_0)
         total_loss+=loss
 
@@ -49,7 +49,7 @@ def local_learning(model, mu:float, optimizer, train_data, epochs:int, loss_f):
         local_loss=train_step(model, model_cpy, mu, optimizer, train_data, loss_f)
 
 
-    return float(local_loss.detach().numpy())
+    return float(local_loss.detach().cpu().numpy())
 
 def loss_classifier(predictions,labels):
 
@@ -66,7 +66,8 @@ def loss_dataset(model, dataset, loss_f):
     for idx,(features,labels) in enumerate(dataset):
 
         predictions= model(features)
-        loss+=loss_f(predictions,labels)
+        probabilities = torch.nn.functional.softmax(predictions, dim=1)
+        loss+=loss_f(probabilities,labels.float())
 
     loss/=idx+1
     return loss
@@ -186,7 +187,7 @@ def FedProx(model, training_sets:list, n_iter:int, testing_sets:list, mu=0,
         - `model`: the final global model
     """
 
-    loss_f=loss_classifier
+    loss_f=nn.BCELoss()
 
     #Variables initialization
     K=len(training_sets) #number of clients
@@ -198,7 +199,7 @@ def FedProx(model, training_sets:list, n_iter:int, testing_sets:list, mu=0,
     loss_hist=[[float(loss_dataset(model, dl, loss_f).detach())
         for dl in training_sets]]
     acc_hist=[[accuracy_dataset(model, dl) for dl in testing_sets]]
-    server_hist=[[tens_param.detach().numpy()
+    server_hist=[[tens_param.detach().cpu().numpy()
         for tens_param in list(model.parameters())]]
     models_hist = []
 

@@ -15,12 +15,21 @@ def fair_split(dataset: Dataset, nb_nodes: int, n_samples_per_node: int, batch_s
     dataloaders = [DataLoader(d, batch_size=batch_size, shuffle=shuffle) for d in dataset_split]
     return dataloaders
 
-def unfair_split(dataset: Dataset, nb_nodes: int, n_samples_per_node: [int], batch_size, shuffle: bool) -> [DataLoader]:
-    #TODO improve the way we split the dataset
+def unfair_size_split(dataset: Dataset, nb_nodes: int, batch_size, shuffle: bool) -> [DataLoader]:
+    n_samples_per_node = []
+    avg = 1/nb_nodes
+
+    for i in range(nb_nodes if nb_nodes%2==0 else nb_nodes-1):
+        n_samples_per_node.append(avg - avg/2 if i%2==0 else avg + avg/2)
+
+    if nb_nodes%2!=0:
+        n_samples_per_node.append(avg)
     dataset_split = torch.utils.data.random_split(dataset, n_samples_per_node)
+
     dataloaders = [DataLoader(d, batch_size=batch_size, shuffle=shuffle) for d in dataset_split]
     return dataloaders
 
+    
 
 def get_SIIM_ISIC(root_path, csv_path, type="normal", train_size=0.8, test_size=0.2, n_clients=3, batch_size=25, shuffle=True, device="cpu", total_size=None, resnet50=False, balanced=False):
     """
@@ -37,7 +46,7 @@ def get_SIIM_ISIC(root_path, csv_path, type="normal", train_size=0.8, test_size=
         - device: device to use for the dataset (cpu or cuda)
         - total_size: total size of the dataset (if None, then the whole dataset is used)
     """
-    assert(type=="normal" or type=="fair" or type=="non-fair")
+    assert(type=="normal" or type=="fair" or type=="unfair_size")
     assert(train_size+test_size==1)
 
     # load the dataset contains in the folder root_path
@@ -53,8 +62,8 @@ def get_SIIM_ISIC(root_path, csv_path, type="normal", train_size=0.8, test_size=
     
     if type=="fair":
         return  fair_split(train_dataset, n_clients, len(train_dataset)//n_clients, batch_size, shuffle), [deepcopy(test_dataloader) for _ in range(n_clients)]
-    elif type=="unfair":
-        return unfair_split(train_dataset, n_clients, [len(train_dataset)//n_clients for _ in range(n_clients)], batch_size, shuffle), [deepcopy(test_dataloader) for _ in range(n_clients)]
+    elif type=="unfair_size":
+        return unfair_size_split(train_dataset, n_clients, batch_size, shuffle), [deepcopy(test_dataloader) for _ in range(n_clients)]
 
     return train_dataloader, test_dataloader
 
