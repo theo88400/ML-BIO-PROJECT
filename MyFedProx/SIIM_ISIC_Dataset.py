@@ -2,10 +2,12 @@ import torch
 import torchvision
 from PIL import Image
 from torchvision import transforms
+from sklearn.utils import resample
+import pandas as pd
 
 
 class SIIM_ISIC_Dataset(torch.utils.data.Dataset):
-    def __init__(self, dataframe, root_path, device="cpu", total_size=None, resnet50=False):
+    def __init__(self, dataframe, root_path, device="cpu", total_size=None, resnet50=False, balanced=False):
         # dataframe contains info about patients as well as image path and label
         self.dataframe = dataframe
         self.root_path = root_path
@@ -18,6 +20,16 @@ class SIIM_ISIC_Dataset(torch.utils.data.Dataset):
                             transforms.ToTensor(),
                             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
                         ])
+        
+        if balanced and total_size is None:
+            # downsample the majority class to have a 50/50 split
+            df_min = self.dataframe[self.dataframe["target"] == 1]
+            df_maj = self.dataframe[self.dataframe["target"] == 0]
+            df_maj_downsampled = df_maj.sample(n=len(df_min))
+            self.dataframe = pd.concat([df_min, df_maj_downsampled])
+            self.dataframe = self.dataframe.sample(frac=1).reset_index(drop=True)
+
+
 
     def __len__(self):
         return len(self.dataframe) if self.total_size is None else self.total_size
