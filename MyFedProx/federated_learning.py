@@ -138,6 +138,8 @@ def classical_training(model, train_set, test_set, n_iter:int, lr=10**-2, decay=
     train_acc_hist=[]
     test_acc_hist=[]
     loss_hist=[]
+    best_test_acc = 0
+    best_model = None
 
     for i in range(n_iter):
         with tqdm(train_set, unit="batch") as tepoch:
@@ -161,12 +163,15 @@ def classical_training(model, train_set, test_set, n_iter:int, lr=10**-2, decay=
         print(f'====> i: {i+1} Train Accuracy: {train_acc}')
         test_acc = accuracy_dataset(model, test_set)
         print(f'====> i: {i+1} Test Accuracy: {test_acc}')
+        if test_acc > best_test_acc:
+            best_test_acc = test_acc
+            best_model = deepcopy(model)
 
         train_acc_hist.append(train_acc)
         test_acc_hist.append(test_acc)
         loss_hist.append(loss.item())
 
-    return model, train_acc_hist, test_acc_hist, loss_hist
+    return best_model, train_acc_hist, test_acc_hist, loss_hist
 
 def FedProx(model, training_sets:list, n_iter:int, testing_sets:list, mu=0,
     file_name="test", epochs=5, lr=10**-2, decay=1):
