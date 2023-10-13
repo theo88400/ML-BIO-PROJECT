@@ -24,6 +24,9 @@ We chose MobileNetV2 which is an efficient networks optimized for speed and memo
 This is custom code to simulated federated learning. The code is inspired by the TP5 on federated learning and has been adapted to work with the SIIM_ISIC dataset. It contains methods to either do a classical training on a whole dataset that will be used as witness and methods to simulate federate learning used to answer our question.
 
 ### Notebooks
+
+They are specifically made to run on Kaggle and won't run on local because the paths won't match.
+
 #### Training
 There is several notebooks used to run the training and analyse the results.
 * One will serve as a witness and perform a classical training
