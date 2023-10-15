@@ -60,4 +60,4 @@ With the confusion matrix, it's better if we have high values in diagonal. We ca
 The last models have better predictions for cancerous images but have also a lot more false positive
 
 ### Conclusion
-It looks like the most important is the whole dataset itself that of course will impact a lot the model's performance. If there is enough data, unbiased and balanced. The way we split the dataset among all client seems to have little impact in federated learning
+It looks like the most important is the whole dataset itself that of course will impact a lot the model's performance. If there is enough data, unbiased and balanced. The way we split the dataset among all clients seems to have little impact in federated learning. Interestingly, the f1-score is better with unfair models, but we see a major dropback in the precision, and a very high recal which influences the f1-score to be bigger. Overall, the classical model and the fair split model have the best compromise between all the metrics, compared to the unfair models with big differences.
