@@ -1,6 +1,10 @@
 # ML-BIO-PROJECT
 ML-BIO Project : Study impact of low data available for federated learning
 
+By:
+* RIPOLL Théo
+* FISCH Quentin
+
 ## Installation
 ``python3 -m pip install -r requirements.txt``
 
@@ -47,5 +51,13 @@ Last notebook will load all different models differently trained and compare the
 | unfair_size_model | 0.785408 | 0.748201 | 0.873950 | 0.806202 |
 | unfair_repartition_model | 0.759657 | 0.688623 | 0.966387 | 0.804196 |
 
+If we look at those results we can see that no matter how the data is split among all the clients, the performances stay almost the same.
+
 
 ![matrix confusion](./notebooks/matrix_confusion.png)
+
+With the confusion matrix, it's better if we have high values in diagonal. We can see it's the first two models that have the highest values which means the predictions are more accurate. Their predictions are very similar when the dataset is equally split.
+The last models have better predictions for cancerous images but have also a lot more false positive
+
+### Conclusion
+It looks like the most important is the whole dataset itself that of course will impact a lot the model's performance. If there is enough data, unbiased and balanced. The way we split the dataset among all client seems to have little impact in federated learning
